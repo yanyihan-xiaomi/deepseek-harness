@@ -498,7 +498,7 @@ describe('provider profile lifecycle', () => {
     expect(typeof info.context?.contextWindow).toBe('number')
   })
 
-  it('exposes pi-ai model thinking levels verbatim without inventing a provider default', async () => {
+  it('exposes pi-ai model thinking levels and a high default when the profile sets none', async () => {
     const ctx = new Context()
     await ctx.plugin(LlmRuntime)
     await ctx.plugin(LlmPiAi, {
@@ -514,6 +514,7 @@ describe('provider profile lifecycle', () => {
             { id: ReasoningEffortId('high'), name: 'High' },
             { id: ReasoningEffortId('max'), name: 'Max' },
           ],
+          defaultEffort: ReasoningEffortId('high'),
         },
       })
     const extended = await ctx.llm.resolveModelInfo('openai', 'gpt-5.6-sol')
