@@ -152,6 +152,12 @@ function profileOptions(
  * level. The request path still refuses, which is where a bad configuration
  * belongs: describing what a model can do must not fail because a deployment
  * asked it for something it cannot.
+ *
+ * An unset profile does not mean "no default". The picker inserts a synthetic
+ * Default item whenever `defaultEffort` is missing, and that item is sent as
+ * *no reasoning parameter* — which the pi-ai builders turn into an explicit
+ * off. Declaring a concrete level here (prefer `high`) keeps that silent off
+ * off the menu and matches the DeepSeek route, which always publishes one.
  * @param model - the resolved model descriptor.
  * @param effort - the profile's configured level, if any.
  * @returns the level when this model supports it, otherwise undefined.
@@ -160,8 +166,11 @@ function describableReasoningLevel(
   model: Model<Api>,
   effort: ReasoningEffortIdType | ModelThinkingLevel | undefined,
 ): ModelThinkingLevel | undefined {
-  if (effort === undefined) return undefined
-  return getSupportedThinkingLevels(model).some(level => level === effort)
+  const levels = getSupportedThinkingLevels(model)
+  if (effort === undefined) {
+    return levels.find(level => level === 'high') ?? levels.find(level => level !== 'off')
+  }
+  return levels.some(level => level === effort)
     ? effort as ModelThinkingLevel
     : undefined
 }
