@@ -113,7 +113,7 @@ describe('ModelSelect reasoning effort', () => {
     })
   })
 
-  it('offers provider default only when the adapter does not configure a model default', () => {
+  it('hides a synthetic Default and falls back to the first non-off level when the adapter sets no default', () => {
     const directory = createSnapshotStore(state({
       groups: [{
         id: 'provider',
@@ -136,11 +136,12 @@ describe('ModelSelect reasoning effort', () => {
     />)
 
     fireEvent.click(screen.getByRole('button', {
-      name: '选择模型，当前 Model，推理等级 Default',
+      name: '选择模型，当前 Model，推理等级 Standard',
     }))
     fireEvent.click(screen.getByRole('menuitem', { name: /推理等级/ }))
     expect(screen.getAllByRole('menuitemradio').map(item => item.textContent))
-      .toEqual(['Default', 'Standard'])
+      .toEqual(['Standard'])
+    expect(screen.queryByText('Default')).toBeNull()
   })
 
   it('opens model choices without exposing a saved route absent from the catalog', () => {

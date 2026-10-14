@@ -41,6 +41,7 @@ import type { PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
 import type { ModelSelectInjected } from './slots.ts'
 import css from './ModelSelect.module.css'
 import { orderModelProviders } from './provider-order.ts'
+import { pickerDefaultEffort } from './picker-effort.ts'
 
 /** Which pane the dropdown shows: the two-row root or one drilled-in list. */
 type Pane = 'root' | 'model' | 'effort'
@@ -98,9 +99,10 @@ export function ModelSelect(
       selection: {
         provider: group.id,
         model: model.id,
-        ...model.reasoning?.defaultEffort === undefined
-          ? {}
-          : { reasoningEffort: model.reasoning.defaultEffort },
+        ...(() => {
+          const effort = pickerDefaultEffort(model.reasoning)
+          return effort === undefined ? {} : { reasoningEffort: effort }
+        })(),
       } satisfies ModelSelection,
     }))), [groups])
   const showSearch = choices.length > 4
@@ -118,7 +120,7 @@ export function ModelSelect(
     : choices.findIndex(c => c.selection.provider === state.current?.provider && c.selection.model === state.current.model)
   const currentChoice = choices[selectedIndex]
   const reasoning = currentChoice?.model.reasoning
-  const effectiveEffort = state.current?.reasoningEffort ?? reasoning?.defaultEffort
+  const effectiveEffort = state.current?.reasoningEffort ?? pickerDefaultEffort(reasoning)
   const effortLabel = currentChoice === undefined
     ? undefined
     : reasoning === undefined
@@ -126,18 +128,16 @@ export function ModelSelect(
       : effectiveEffort === undefined
         ? t('effort.providerDefault')
         : reasoning.efforts.find(level => level.id === effectiveEffort)?.name ?? effectiveEffort
+  // No synthetic "Default" row: a missing session effort already resolves to
+  // `pickerDefaultEffort`, which is the level the trigger shows and a model
+  // pick carries. The menu only lists real catalog levels.
   const effortChoices = useMemo<readonly EffortChoice[]>(() => reasoning === undefined
     ? []
-    : [
-      ...reasoning.defaultEffort === undefined
-        ? [{ key: 'provider-default', effort: undefined, label: t('effort.providerDefault') }]
-        : [],
-      ...reasoning.efforts.map((effort: ModelReasoningEffort) => ({
-        key: `effort:${effort.id}`,
-        effort: effort.id,
-        label: effort.name,
-      })),
-    ], [reasoning, t])
+    : reasoning.efforts.map((effort: ModelReasoningEffort) => ({
+      key: `effort:${effort.id}`,
+      effort: effort.id,
+      label: effort.name,
+    })), [reasoning])
   const { pending } = state
   const busy = pending !== null
 
