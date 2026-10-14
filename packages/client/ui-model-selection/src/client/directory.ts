@@ -13,6 +13,7 @@ import type { RemoteResult, TypertClientRemote } from '@deepseek-ai/dsh-typert-p
 import type { ObservableSnapshot, SnapshotStore } from '@deepseek-ai/dsh-client-store'
 import { createSnapshotStore } from '@deepseek-ai/dsh-client-store'
 import type { ModelCatalogDirectory } from './catalog.ts'
+import { pickerDefaultEffort } from './picker-effort.ts'
 
 /** Directory snapshot both entries render from. */
 export interface ModelDirectoryState {
@@ -91,8 +92,9 @@ export class ModelDirectory {
   async select(selection: ModelSelection): Promise<RemoteResult<void>> {
     this.assertAvailable()
     const previous = this.store.getSnapshot().current
-    const previousEffort = previous?.reasoningEffort ?? (previous === null ? undefined : this.catalog.reasoningFor(previous)?.defaultEffort)
-    const nextEffort = selection.reasoningEffort ?? this.catalog.reasoningFor(selection)?.defaultEffort
+    const previousEffort = previous?.reasoningEffort
+      ?? (previous === null ? undefined : pickerDefaultEffort(this.catalog.reasoningFor(previous)))
+    const nextEffort = selection.reasoningEffort ?? pickerDefaultEffort(this.catalog.reasoningFor(selection))
     const generation = ++this.generation
     this.store.update((s) => { s.status = 'selecting'; s.pending = selection; s.error = null })
     const result = await this.sessions.selectModel({
@@ -160,7 +162,7 @@ export class ModelDirectory {
     const projected = modelSelectionProjection(this.projected.getSnapshot())
     const intended = projected?.next ?? catalog.value?.default
     const reasoning = intended === undefined ? undefined : this.catalog.reasoningFor(intended)
-    const effort = intended?.reasoningEffort ?? reasoning?.defaultEffort
+    const effort = intended?.reasoningEffort ?? pickerDefaultEffort(reasoning)
     const retainedEffort = effort === undefined ? undefined
       : reasoning?.efforts.find(level => level.id === effort)?.name ?? effort
     if (catalog.status !== 'ready' || catalog.value === null || projected === undefined) {

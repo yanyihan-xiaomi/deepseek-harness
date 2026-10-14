@@ -29,6 +29,7 @@ import type { ModelSelectInjected } from './slots.ts'
 import { ModelSelect } from './ModelSelect.tsx'
 import { en, zh, type ModelKey } from './locales.ts'
 import { orderModelProviders } from './provider-order.ts'
+import { pickerDefaultEffort } from './picker-effort.ts'
 
 export { ModelDirectory } from './directory.ts'
 export type { ModelDirectoryState } from './directory.ts'
@@ -88,8 +89,8 @@ function selectionOf(state: ModelDirectoryState, id: string): ModelSelection | u
       if (rowId(group.id, model.id) !== id) continue
       const sameRoute = state.current?.provider === group.id && state.current.model === model.id
       const reasoningEffort = sameRoute
-        ? state.current?.reasoningEffort ?? model.reasoning?.defaultEffort
-        : model.reasoning?.defaultEffort
+        ? state.current?.reasoningEffort ?? pickerDefaultEffort(model.reasoning)
+        : pickerDefaultEffort(model.reasoning)
       return {
         provider: group.id,
         model: model.id,
